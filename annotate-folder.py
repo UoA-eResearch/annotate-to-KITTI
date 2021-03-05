@@ -7,10 +7,12 @@ Description: This script generates annotations for images of a given dataset
 '''
 import cv2
 import numpy as np
+import os
 from os import listdir, mkdir, getcwd
 from os.path import isfile, join, exists
 import json
 from shutil import copyfile
+import sys
 
 # Global variables
 ix,iy = -1,-1 # Iintial mouse point coordinates
@@ -61,14 +63,28 @@ def draw_annotation(event,x,y,flags,param):
         lx = x
         ly = y
 
-if __name__ == '__main__':
-    datasetPath = input('Enter the path to dataset: ')
-    current_path = getcwd()
-    destination_images_path = current_path+'/'+datasetPath.split('/')[-1]+'_Images_KITTI'
-    destination_annotations_path = current_path+'/'+datasetPath.split('/')[-1]+'_Annotations_KITTI'
+def print_usage():
+    s = """
+Controls:
 
-    obj_label = input('Enter default object label: ')
-    obj_label_default = obj_label
+Esc: Stop annotating dataset
+q:   Finish annotating current image
+c:   Cancel annotation for most recent bounding box
+l:   Change label for next object
+n:   Skip to next image
+"""
+    print(s)
+
+if __name__ == '__main__':
+    
+    print_usage()
+    datasetPath = sys.argv[1]
+    obj_label_default = sys.argv[2]
+    
+    current_path = getcwd()
+    datasetPath_folder_name = os.path.split(datasetPath)[-1]
+    destination_images_path = os.path.join(current_path, datasetPath_folder_name + '_Images_KITTI')
+    destination_annotations_path = os.path.join(current_path, datasetPath_folder_name + '_Annotations_KITTI')    
 
     if(not exists(destination_images_path)):
         mkdir(destination_images_path)
@@ -79,7 +95,7 @@ if __name__ == '__main__':
     for datasetImgFile in listdir(datasetPath):
         if isfile(join(datasetPath, datasetImgFile)):
             obj_label = obj_label_default
-            filepath = datasetPath+'/'+datasetImgFile
+            filepath = os.path.join(datasetPath, datasetImgFile)
             img = cv2.imread(filepath,1)
             try:
                 rows, columns, colors = img.shape
@@ -94,8 +110,8 @@ if __name__ == '__main__':
                 img = cv2.resize(img, None, fx=resize_factor,fy=resize_factor)
                 rows, columns, colors = img.shape
             destFileName = datasetImgFile.split('.')[0]
-            destAnnFile = destination_annotations_path + '/' + destFileName +'.txt'
-            destImgFile = destination_images_path + '/' + datasetImgFile
+            destAnnFile = os.path.join(destination_annotations_path, destFileName +'.txt')
+            destImgFile = os.path.join(destination_images_path, datasetImgFile)
             if(exists(destAnnFile)):
                 logf.write("Annotation already exists for {0}\n".format(filepath))
                 continue
